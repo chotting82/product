@@ -1,36 +1,43 @@
-name: Tag and Release after CI
+name: Check Release and Do Something
 
 on:
-  workflow_run:
-    workflows: ["CD"]       # 위 CI 워크플로우의 이름과 동일해야 함
-    types:
-      - completed
+  workflow_dispatch:
+    inputs:
+      release_name:
+        description: "릴리스 이름을 입력하세요 (예: Release v1.2.3)"
+        required: true
 
 jobs:
-  tag-and-release:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+  check-release-and-run:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Check out code
-        uses: actions/checkout@v3
-
-      - name: Tag the commit
-        run: |
-          # CI에서 빌드/테스트가 성공한 commit에 태그를 찍고 싶다면:
-          # GitHub가 넘어오는 GITHUB_SHA는 트리거 워크플로우(CI)의 커밋SHA가 아니라
-          # "tag-and-release" 워크플로우 자체의 HEAD를 가리킬 수 있으니 주의가 필요.
-          # 아래처럼 CI가 돌았던 SHA는 event.workflow_run.head_sha 에 담겨 있습니다.
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git checkout ${{ github.event.workflow_run.head_sha }}
-          git tag v1.2.3
-          git push origin v1.2.3
-
-      - name: Create GitHub Release
-        uses: actions/create-release@v1
+      - name: Check if release with given name exists
+        id: check_release
+        uses: actions/github-script@v6
         with:
-          tag_name: v1.2.3
-          release_name: "v1.2.3 Release"
-          body: "CI succeeded, here's the release!"
-          draft: false
-          prerelease: false
+          script: |
+            const releaseName = "${{ github.event.inputs.release_name }}"
+            const releases = await github.paginate(
+              github.rest.repos.listReleases,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo
+              }
+            )
+            const found = releases.find(r => r.name === releaseName)
+            if (found) {
+              core.info(`✅ Release "${releaseName}" found (tag: ${found.tag_name})`)
+              core.setOutput("exists", "true")
+              core.setOutput("tag", found.tag_name)
+            } else {
+              core.warning(`❌ Release "${releaseName}" not found.`)
+              core.setOutput("exists", "false")
+            }
+
+      - name: Run script only if release exists
+        if: steps.check_release.outputs.exists == 'true'
+        run: |
+          echo "Running deployment for release..."
+          echo "Release tag: ${{ steps.check_release.outputs.tag }}"
+          # 예: curl로 배포 API 호출, 바이너리 다운로드, 서버 전개 등
