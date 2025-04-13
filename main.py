@@ -10,3 +10,5 @@ if __name__ == '__main__':
     z = a/(b* c) * Decimal(100)
 
     print(z)
+
+    exit(1)
