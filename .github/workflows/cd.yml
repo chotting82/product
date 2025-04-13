@@ -1,0 +1,61 @@
+name: CD
+
+# pull_request 이벤트 발생 시 빌드/테스트 실행
+on:
+  push:
+    branches: [main]   # 원하는 브랜치에 맞춰 수정
+  workflow_dispatch:
+    inputs:
+      deploy_target:
+        type: choice
+        description: "Select deployment target"
+        options:
+          - A
+          - B
+        default: A
+        required: true
+
+jobs:
+  build:
+    name: Full build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: echo npm install
+
+  test:
+    name: regression test
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Run tests
+        run: |
+          echo npm test
+          python main.py
+          if [ $? -ne 0 ]; then
+            echo "fail"
+            exit 1
+          fi
+          
+          echo "success"
+
+  deploy:
+    name: deploy
+    runs-on: ubuntu-latest
+    needs : test
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+
+    steps:
+      - name: Deploy
+        run: |
+          # 입력으로 받아온 deploy_target 값에 따라 분기
+          if [ "${{ github.event.inputs.deploy_target }}" = "A" ]; then
+            echo "Deploying to environment A..."
+            # 여기서 A 환경 배포 스크립트 실행
+          else
+            echo "Deploying to environment B..."
+            # 여기서 B 환경 배포 스크립트 실행
+          fi
