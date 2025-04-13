@@ -31,8 +31,7 @@ jobs:
               core.setOutput("exists", "true")
               core.setOutput("tag", found.tag_name)
             } else {
-              core.warning(`❌ Release "${releaseName}" not found.`)
-              core.setOutput("exists", "false")
+              core.setFailed(`❌ Release "${releaseName}" not found.`)
             }
 
       - name: Run script only if release exists
