@@ -2,7 +2,7 @@ from decimal import Decimal
 
 
 if __name__ == '__main__':
-    a = 125
+    a = 126
 
     b = Decimal("3.669")
     c = Decimal("1452.6700")
