@@ -1,0 +1,19 @@
+name: CI
+
+# pull_request 이벤트 발생 시 빌드/테스트 실행
+on:
+  pull_request:
+    branches: [main, develop]   # 원하는 브랜치에 맞춰 수정
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+
+      - name: Install dependencies
+        run: echo npm install
+
+      - name: Run tests
+        run: echo npm test
