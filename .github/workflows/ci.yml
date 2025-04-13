@@ -18,6 +18,7 @@ jobs:
       - name: Run tests
         run: |
           echo npm test
+          python main.py
           if [ $? -ne 0 ]; then
             echo "fail"
             exit 1
