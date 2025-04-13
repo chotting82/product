@@ -11,4 +11,4 @@ if __name__ == '__main__':
 
     print(z)
 
-    exit(1)
+    exit(0)
